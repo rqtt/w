@@ -9,6 +9,35 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
+<script>
+  // ===== holiday themes =====
+  // [month, day] in your timezone (bucharest). each theme only shows on that exact day.
+  // preview any theme on any day by adding ?theme=christmas, ?theme=halloween or ?theme=birthday to the url.
+  window.THEME_DATES = { christmas: [12, 24], halloween: [10, 31], birthday: [3, 16] };
+
+  (function () {
+    var pick = null;
+    try {
+      var q = new URLSearchParams(location.search).get('theme');
+      if (q === 'none') {
+        pick = null;
+      } else if (q && Object.prototype.hasOwnProperty.call(THEME_DATES, q)) {
+        pick = q;
+      } else {
+        var m = 0, d = 0;
+        new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Bucharest', month: 'numeric', day: 'numeric' })
+          .formatToParts(new Date())
+          .forEach(function (p) { if (p.type === 'month') m = +p.value; if (p.type === 'day') d = +p.value; });
+        for (var k in THEME_DATES) {
+          if (THEME_DATES[k][0] === m && THEME_DATES[k][1] === d) pick = k;
+        }
+      }
+    } catch (e) {}
+    window.SITE_THEME = pick;
+    if (pick) document.documentElement.setAttribute('data-theme', pick);
+  })();
+</script>
+
 <style>
   :root {
     --ink: #0a0a0a;
@@ -17,20 +46,23 @@
     --paper: #f2efea;
     --muted: #8a8a8a;
     --accent: #e5484d;
+    --accent-rgb: 229, 72, 77;
+    --accent-2: #5a5a64;
     --sidebar-width: 220px;
     --edge: clamp(24px, 5vw, 72px);
   }
 
+  html[data-theme="christmas"] { --accent: #e5484d; --accent-rgb: 229, 72, 77; --accent-2: #3fb27f; }
+  html[data-theme="halloween"] { --accent: #ff7a1a; --accent-rgb: 255, 122, 26; --accent-2: #8b5cf6; }
+  html[data-theme="birthday"]  { --accent: #ff5fa2; --accent-rgb: 255, 95, 162; --accent-2: #ffd166; }
+
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
 
   html {
     scroll-behavior: smooth;
     width: 100%;
     overflow-x: hidden;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    * { animation: none !important; transition-duration: 0.01ms !important; }
   }
 
   body {
@@ -43,6 +75,9 @@
     -webkit-font-smoothing: antialiased;
     text-transform: lowercase;
   }
+
+  /* browsers don't pass text-transform down to buttons by default — this is what kept "Artists" capitalised */
+  button { text-transform: inherit; }
 
   a { color: inherit; }
 
@@ -67,6 +102,17 @@
     margin: 0 0 28px 0;
   }
 
+  /* ===== seasonal particles ===== */
+  #fxCanvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1500;
+  }
+
+  /* ===== enter screen ===== */
   .enter-screen {
     position: fixed;
     inset: 0;
@@ -92,9 +138,10 @@
     pointer-events: none;
   }
 
-  .enter-blob-1 { width: 520px; height: 520px; background: rgba(229, 72, 77, 0.16); top: -120px; left: -100px; }
+  .enter-blob-1 { width: 520px; height: 520px; background: rgba(var(--accent-rgb), 0.16); top: -120px; left: -100px; }
   .enter-blob-2 { width: 620px; height: 620px; background: rgba(90, 90, 100, 0.28); bottom: -180px; right: -120px; }
-  .enter-blob-3 { width: 420px; height: 420px; background: rgba(229, 72, 77, 0.08); top: 55%; left: 60%; }
+  .enter-blob-3 { width: 420px; height: 420px; background: rgba(var(--accent-rgb), 0.08); top: 55%; left: 60%; }
+  html[data-theme] .enter-blob-2 { background: color-mix(in srgb, var(--accent-2) 24%, transparent); }
 
   .enter-text {
     position: relative;
@@ -107,6 +154,7 @@
 
   @keyframes enterPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
+  /* ===== sidebar ===== */
   .sidebar {
     position: fixed;
     top: 0; left: 0; bottom: 0;
@@ -207,6 +255,7 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
+  /* ===== home ===== */
   #panel-home.active {
     display: flex;
     flex-direction: column;
@@ -223,12 +272,29 @@
     left: -80px;
     width: 640px;
     height: 640px;
-    background: radial-gradient(circle, rgba(229, 72, 77, 0.16), transparent 70%);
+    background: radial-gradient(circle, rgba(var(--accent-rgb), 0.16), transparent 70%);
     filter: blur(40px);
     pointer-events: none;
   }
 
   .home-content { position: relative; }
+
+  .theme-banner {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 26px 0;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 0.86rem;
+    font-weight: 600;
+    border: 1px solid rgba(var(--accent-rgb), 0.45);
+    background: rgba(var(--accent-rgb), 0.08);
+    opacity: 0;
+    animation: rise 0.7s ease forwards;
+  }
+
+  html[data-theme="christmas"] .theme-banner { border-color: rgba(63, 178, 127, 0.55); background: rgba(63, 178, 127, 0.1); }
 
   .home-title {
     font-size: clamp(2rem, 4.5vw, 2.8rem);
@@ -288,6 +354,7 @@
 
   .home-links {
     display: flex;
+    flex-wrap: wrap;
     gap: 24px;
     opacity: 0;
     animation: rise 0.7s ease forwards;
@@ -310,15 +377,26 @@
     flex-direction: column;
     align-items: center;
     gap: 12px;
-    text-decoration: none;
     color: inherit;
     flex: none;
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
     opacity: 0;
     animation: rise 0.7s ease forwards;
     animation-delay: 0.2s;
   }
 
-  .discord-pic-wrap { position: relative; width: 108px; height: 108px; flex: none; }
+  .discord-pic-wrap {
+    position: relative;
+    width: 108px; height: 108px;
+    flex: none;
+    transition: transform 0.2s ease;
+  }
+
+  .discord-profile:hover .discord-pic-wrap { transform: translateY(-2px); }
 
   .discord-pic {
     width: 108px; height: 108px;
@@ -341,6 +419,13 @@
     font-size: 1.8rem;
   }
 
+  .avatar-deco {
+    position: absolute;
+    left: -10%; top: -10%;
+    width: 120%; height: 120%;
+    pointer-events: none;
+  }
+
   .status-dot {
     position: absolute;
     right: 4px; bottom: 4px;
@@ -349,10 +434,10 @@
     border: 3px solid var(--ink);
   }
 
-  .status-dot.online { background: #23a55a; }
-  .status-dot.idle { background: #f0b232; }
-  .status-dot.dnd { background: #f23f42; }
-  .status-dot.offline { background: #80848e; }
+  .status-dot.online, .mini-dot.online { background: #23a55a; }
+  .status-dot.idle, .mini-dot.idle { background: #f0b232; }
+  .status-dot.dnd, .mini-dot.dnd { background: #f23f42; }
+  .status-dot.offline, .mini-dot.offline { background: #80848e; }
 
   .discord-info {
     display: flex;
@@ -383,6 +468,7 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
+  /* ===== about / skills ===== */
   #panel-about p {
     color: var(--paper);
     max-width: 62ch;
@@ -390,6 +476,7 @@
   }
 
   #panel-about p:last-child { margin-bottom: 0; }
+  #panel-about p.eyebrow { color: var(--muted); margin: 0 0 10px 0; }
 
   .skill-group { margin-bottom: 34px; }
   .skill-group:last-child { margin-bottom: 0; }
@@ -411,7 +498,8 @@
 
   .pill:hover { border-color: var(--accent); }
 
-  .lastfm-link {
+  /* ===== music ===== */
+  .music-link {
     display: inline-block;
     margin-bottom: 28px;
     text-decoration: none;
@@ -422,7 +510,7 @@
     transition: color 0.15s ease, border-color 0.15s ease;
   }
 
-  .lastfm-link:hover { color: var(--accent); border-color: var(--accent); }
+  .music-link:hover { color: var(--accent); border-color: var(--accent); }
 
   .music-tabs {
     display: flex;
@@ -456,12 +544,17 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 14px 18px;
+    padding: 12px 18px;
     border: 1px solid var(--line);
     border-radius: 8px;
     background: var(--panel);
     margin-bottom: 10px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.15s ease;
   }
+
+  a.music-row:hover { border-color: rgba(var(--accent-rgb), 0.6); }
 
   .music-row .rank {
     color: var(--muted);
@@ -471,7 +564,8 @@
   }
 
   .music-row .avatar {
-    width: 34px; height: 34px;
+    position: relative;
+    width: 44px; height: 44px;
     border-radius: 50%;
     background: var(--line);
     color: var(--muted);
@@ -479,20 +573,50 @@
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 0.82rem;
+    font-size: 0.9rem;
     flex: none;
     overflow: hidden;
   }
 
+  .music-row .avatar.square { border-radius: 6px; }
+
   .music-row .avatar img {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.35s ease;
   }
 
-  .music-row .mname { flex: 1; font-weight: 600; font-size: 0.95rem; }
-  .music-row .mcount { color: var(--muted); font-size: 0.85rem; }
+  .music-row .avatar img.loaded { opacity: 1; }
 
+  .music-row .mname {
+    flex: 1;
+    min-width: 0;
+    font-weight: 600;
+    font-size: 0.95rem;
+    line-height: 1.35;
+  }
+
+  .music-row .mname span,
+  .music-row .mname small {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .music-row .mname small {
+    color: var(--muted);
+    font-weight: 500;
+    font-size: 0.8rem;
+  }
+
+  .music-row .mcount { color: var(--muted); font-size: 0.82rem; flex: none; }
+
+  /* ===== projects ===== */
   .project-grid {
     display: grid;
     grid-template-columns: repeat(12, 1fr);
@@ -534,7 +658,125 @@
     border-radius: 4px;
   }
 
-  #panel-contact p { color: var(--muted); max-width: 50ch; font-size: 1.05rem; }
+  /* ===== quest log ===== */
+  .quest-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0 0 34px 0;
+  }
+
+  .quest-stats span {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    border-radius: 999px;
+    padding: 5px 14px;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .quest-stats b { color: var(--paper); font-weight: 700; }
+
+  .quest-group { margin-bottom: 38px; max-width: 720px; }
+  .quest-group h3 { color: var(--muted); font-size: 0.9rem; font-weight: 600; margin-bottom: 14px; }
+
+  .quest {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 22px 24px;
+    margin-bottom: 12px;
+    transition: border-color 0.15s ease;
+  }
+
+  .quest:hover { border-color: #333; }
+  .quest.main { border-left: 3px solid var(--accent); }
+  .quest.main.completed { border-left-color: #23a55a; }
+
+  .quest-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .quest-type {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--muted);
+  }
+
+  .quest.main .quest-type { color: var(--accent); border-color: rgba(var(--accent-rgb), 0.45); }
+  .quest.completed .quest-type { color: #23a55a; border-color: rgba(35, 165, 90, 0.45); }
+
+  .quest-title { flex: 1; min-width: 160px; margin: 0; font-size: 1.05rem; font-weight: 700; }
+  .quest-pct { color: var(--muted); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+
+  .quest-desc { color: var(--muted); font-size: 0.93rem; margin: 8px 0 16px 0; }
+
+  .quest-bar {
+    height: 6px;
+    background: var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .quest-bar span {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--accent);
+    border-radius: inherit;
+    transition: width 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .quest.completed .quest-bar span { background: #23a55a; }
+
+  .quest-objectives {
+    list-style: none;
+    padding: 0;
+    margin: 16px 0 0 0;
+    display: grid;
+    gap: 8px;
+  }
+
+  .quest-objectives li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.92rem;
+  }
+
+  .check {
+    width: 16px; height: 16px;
+    flex: none;
+    margin-top: 4px;
+    border: 1.5px solid #3a3a3a;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink);
+  }
+
+  .quest-objectives li.done { color: var(--muted); }
+  .quest-objectives li.done .check { background: var(--accent); border-color: var(--accent); }
+  .quest.completed .quest-objectives li.done .check { background: #23a55a; border-color: #23a55a; }
+
+  .quest-reward {
+    margin: 16px 0 0 0;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+
+  .quest-reward b { color: var(--paper); font-weight: 600; }
+
+  /* ===== contact ===== */
+  #panel-contact > p { color: var(--muted); max-width: 50ch; font-size: 1.05rem; }
 
   .contact-links {
     margin-top: 28px;
@@ -553,6 +795,331 @@
 
   .contact-links a:hover { border-color: var(--accent); color: var(--accent); }
 
+  .timecard {
+    margin-top: 44px;
+    max-width: 540px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 18px 22px 18px 18px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background:
+      radial-gradient(140% 120% at 85% 0%, rgba(255, 255, 255, 0.09), transparent 55%),
+      radial-gradient(90% 100% at 20% 110%, rgba(255, 255, 255, 0.05), transparent 60%),
+      #151515;
+  }
+
+  .analog { width: 78px; height: 78px; flex: none; }
+  .analog .face { fill: #0c0c0c; stroke: #2e2e2e; stroke-width: 2; }
+  .analog .tick { stroke: #f2efea; stroke-linecap: round; }
+  .analog .hand { stroke-linecap: round; }
+  .analog .hand-h { stroke: #f2efea; stroke-width: 4.5; }
+  .analog .hand-m { stroke: #f2efea; stroke-width: 3; }
+  .analog .hand-s { stroke: var(--accent); stroke-width: 1.6; }
+  .analog .pin { fill: var(--accent); }
+
+  .tc-info { min-width: 0; }
+  .tc-city { font-weight: 700; font-size: 1.2rem; }
+  .tc-offset { color: var(--muted); font-size: 0.9rem; font-weight: 500; }
+
+  .tc-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    margin: 2px 0 10px 0;
+    color: #d8d5d0;
+    font-size: 0.86rem;
+  }
+
+  .tc-row > span { display: inline-flex; align-items: center; gap: 6px; }
+  .tc-row svg { flex: none; opacity: 0.85; }
+
+  .tc-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.15s ease;
+  }
+
+  .tc-link:hover { background: #ffffff; }
+  .ti-raw { display: none; }
+
+  /* ===== discord profile popup ===== */
+  .dc-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.62);
+    backdrop-filter: blur(6px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0s linear 0.2s;
+  }
+
+  .dc-overlay.open {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.2s ease;
+  }
+
+  .dc-card {
+    position: relative;
+    width: min(360px, 100%);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: #070707;
+    border: 1px solid #1d1d1d;
+    border-radius: 14px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+    transform: translateY(14px) scale(0.97);
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    scrollbar-width: none;
+  }
+
+  .dc-card::-webkit-scrollbar { display: none; }
+  .dc-overlay.open .dc-card { transform: none; }
+
+  .dc-banner {
+    position: relative;
+    height: 140px;
+    background-color: #393a41;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+  }
+
+  .dc-close {
+    position: absolute;
+    top: 10px; right: 10px;
+    z-index: 6;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0, 0, 0, 0.5);
+    color: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  .dc-close:hover { background: rgba(0, 0, 0, 0.8); }
+
+  .dc-avatar-wrap {
+    position: absolute;
+    top: 92px; left: 16px;
+    width: 96px; height: 96px;
+    z-index: 3;
+  }
+
+  .dc-avatar {
+    width: 100%; height: 100%;
+    display: block;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 6px solid #070707;
+    background: #141414;
+  }
+
+  .dc-avatar-wrap .status-dot {
+    right: 2px; bottom: 2px;
+    width: 26px; height: 26px;
+    border: 5px solid #070707;
+  }
+
+  .dc-bubble {
+    position: absolute;
+    top: 150px; left: 124px;
+    z-index: 3;
+    max-width: calc(100% - 140px);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 14px;
+    background: #171717;
+    border: 1px solid #262626;
+    font-size: 0.8rem;
+    line-height: 1.3;
+  }
+
+  .dc-bubble::before {
+    content: "";
+    position: absolute;
+    left: -5px; top: 10px;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: #171717;
+    border: 1px solid #262626;
+  }
+
+  .dc-bubble img { width: 18px; height: 18px; }
+  .dc-bubble span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .dc-body {
+    position: relative;
+    z-index: 2;
+    padding: 58px 20px 22px;
+  }
+
+  .dc-name-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .dc-name {
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+
+  .dc-username { color: #a8a8a8; font-size: 0.9rem; margin-top: 2px; }
+
+  .dc-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+  }
+
+  .dc-badges a, .dc-badges span { display: inline-flex; }
+  .dc-badges img { width: 22px; height: 22px; }
+
+  .dc-section h4 {
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    color: #bdbdbd;
+    margin: 24px 0 8px 0;
+  }
+
+  .dc-bio {
+    font-size: 0.92rem;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+  }
+
+  .dc-bio a { color: var(--paper); text-underline-offset: 3px; }
+  .dc-bio a:hover { color: var(--accent); }
+  .dc-emoji { width: 20px; height: 20px; vertical-align: -4px; }
+
+  .dc-act {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 10px;
+    background: #111111;
+    border: 1px solid #1e1e1e;
+  }
+
+  .dc-act-img {
+    width: 56px; height: 56px;
+    flex: none;
+    border-radius: 8px;
+    object-fit: cover;
+    background: #1d1d1d;
+  }
+
+  .dc-act-ph {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-weight: 700;
+  }
+
+  .dc-act-text {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    font-size: 0.82rem;
+    line-height: 1.4;
+  }
+
+  .dc-act-text span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dc-act-text span:first-child { font-weight: 600; }
+  .dc-act-time { color: var(--muted); }
+
+  .dc-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 22px;
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+
+  .mini-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+
+  .dc-copy {
+    width: 100%;
+    margin-top: 18px;
+    padding: 12px;
+    border-radius: 999px;
+    border: 1px solid #222;
+    background: #151515;
+    color: var(--paper);
+    font-family: inherit;
+    font-size: 0.92rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+
+  .dc-copy:hover { background: #1c1c1c; border-color: #2e2e2e; }
+
+  .dc-open {
+    display: block;
+    text-align: center;
+    margin-top: 12px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-decoration: none;
+  }
+
+  .dc-open:hover { color: var(--accent); }
+
+  .dc-effect {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: inherit;
+  }
+
+  .dc-effect img {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: auto;
+  }
+
+  .dc-effect canvas { position: absolute; top: 0; left: 0; }
+
+  /* ===== background music player ===== */
   .music-player {
     position: fixed;
     bottom: 22px;
@@ -625,15 +1192,28 @@
     .project.half { grid-column: span 12; }
     .volume-slider { width: 64px; }
   }
+
+  @media (max-width: 480px) {
+    .timecard { flex-direction: column; align-items: flex-start; }
+  }
+
+  /* kept last so it wins: with motion turned off, show everything instead of leaving it invisible */
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition-duration: 0.01ms !important; }
+    .home-title, .home-role, .home-links, .discord-profile, .theme-banner { opacity: 1; }
+    .underline-svg path { stroke-dashoffset: 0; }
+  }
 </style>
 </head>
 <body>
+
+<canvas id="fxCanvas" aria-hidden="true"></canvas>
 
 <div class="enter-screen" id="enterScreen">
   <div class="enter-blob enter-blob-1"></div>
   <div class="enter-blob enter-blob-2"></div>
   <div class="enter-blob enter-blob-3"></div>
-  <span class="enter-text">enter</span>
+  <span class="enter-text" id="enterText">enter</span>
 </div>
 
 <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle menu" aria-expanded="false">
@@ -648,6 +1228,7 @@
     <li><button class="nav-item" data-target="skills"><span class="dash">-</span>skills</button></li>
     <li><button class="nav-item" data-target="music"><span class="dash">-</span>music</button></li>
     <li><button class="nav-item" data-target="projects"><span class="dash">-</span>projects</button></li>
+    <li><button class="nav-item" data-target="quests"><span class="dash">-</span>quest log</button></li>
     <li><button class="nav-item" data-target="contact"><span class="dash">-</span>contact</button></li>
   </ul>
 </nav>
@@ -657,28 +1238,31 @@
   <section class="tab-panel active" id="panel-home">
     <div class="home-glow"></div>
     <div class="home-content">
+      <p class="theme-banner" id="themeBanner" hidden></p>
       <div class="home-header">
         <div>
           <h1 class="home-title">hi, i'm <span class="name-underline">teo<svg class="underline-svg" viewBox="0 0 220 14" preserveAspectRatio="none" aria-hidden="true"><path d="M4,7 C80,5.5 140,9 216,6.5" /></svg></span></h1>
           <p class="home-role">student &amp; developer</p>
         </div>
-        <a class="discord-profile" id="discordBadge" href="#" target="_blank" rel="noopener">
+        <button type="button" class="discord-profile" id="discordBadge" aria-haspopup="dialog" aria-label="open my discord profile">
           <div class="discord-pic-wrap">
             <div class="discord-pic discord-pic-placeholder" id="discordAvatarPlaceholder">?</div>
             <img class="discord-pic" id="discordAvatar" alt="" style="display:none;">
+            <img class="avatar-deco" id="discordDeco" alt="" hidden>
             <span class="status-dot offline" id="discordStatusDot"></span>
           </div>
           <div class="discord-info">
             <span class="discord-username" id="discordUsername">discord</span>
-            <span class="discord-status-text" id="discordStatusText">not connected</span>
+            <span class="discord-status-text" id="discordStatusText">loading…</span>
             <span class="discord-last-seen" id="discordLastSeen"></span>
           </div>
-        </a>
+        </button>
       </div>
       <div class="home-links">
         <a href="mailto:cnt261900@cjevs.ro">email</a>
         <a href="https://github.com/rqtt">github</a>
         <a href="https://discord.com/users/350806073000722437">discord</a>
+        <a href="https://www.instagram.com/onoseteodor/" id="instagramLink" target="_blank" rel="noopener">instagram</a>
       </div>
     </div>
   </section>
@@ -686,9 +1270,12 @@
   <section class="tab-panel" id="panel-about">
     <p class="eyebrow">— about me</p>
     <h2>About</h2>
-    <p>i am a high school student with a strong passion for coding, technology and personal development. i enjoy exploring the world of software development and digital innovation, as i believe coding is a powerful way to transform ideas into useful and meaningful projects.</p>
+    <p>i am a high school student on the math and sciences track, with a strong passion for coding, technology and personal development. i enjoy exploring the world of software development and digital innovation, as i believe coding is a powerful way to transform ideas into useful and meaningful projects.</p>
+    <p>studying math and sciences shapes the way i build things: breaking a big problem into small steps, testing ideas, and not stopping until i understand why something works. that's the part of programming i like most.</p>
+    <p>i like working on every layer of a project. on the low-level side, i write c++ and lua — like luabridge, a scripting bridge that lets c++ apps load and safely run plugins. on the web, i build full apps with next.js and typescript, like a dashboard for managing a game's admin settings and moderation. and with python i make data tools, like candle$$, which charts markets with indicators such as rsi and macd. this site is one of my ongoing projects too.</p>
+    <p>i also have a creative side. i use photoshop, after effects, canva and blender for visuals, and i'm learning fl studio and ableton live to make my own music. there's almost always something playing while i work — you can see what in the music tab.</p>
     <p>i am actively involved in international and community-based experiences, including erasmus+ projects, which have helped me develop communication skills, cultural awareness, teamwork, and adaptability. i am also a member of the romanian rotary club, where i take part in activities focused on leadership, volunteering, and making a positive impact in the community.</p>
-    <p>my passions include learning new skills, working with people, discovering new cultures, creating projects, and constantly challenging myself to grow.</p>
+    <p>my passions include learning new skills, working with people, discovering new cultures, creating projects, and constantly challenging myself to grow. if you want to see what i'm working towards right now, check out the quest log.</p>
   </section>
 
   <section class="tab-panel" id="panel-skills">
@@ -737,25 +1324,25 @@
   <section class="tab-panel" id="panel-music">
     <p class="eyebrow">— listening to</p>
     <h2>Music</h2>
-    <p class="section-desc">what i've been listening to this month, tracked via last.fm.</p>
-    <a class="lastfm-link" id="lastfmLink" href="https://www.last.fm/user/rqtt" target="_blank" rel="noopener">last.fm profile</a>
+    <p class="section-desc" id="musicDesc">what i've been listening to over the last 4 weeks, tracked via stats.fm.</p>
+    <a class="music-link" id="statsfmLink" href="https://stats.fm/rlse" target="_blank" rel="noopener">stats.fm profile</a>
 
     <div class="music-tabs">
-      <button class="music-tab active" data-list="artists">Artists</button>
-      <button class="music-tab" data-list="tracks">Tracks</button>
-      <button class="music-tab" data-list="albums">Albums</button>
+      <button class="music-tab active" data-list="artists">artists</button>
+      <button class="music-tab" data-list="tracks">tracks</button>
+      <button class="music-tab" data-list="albums">albums</button>
     </div>
 
     <div class="music-list active" data-list="artists">
-      <div class="music-row"><span class="rank">01</span><span class="avatar">?</span><span class="mname">connect your last.fm account below</span><span class="mcount"></span></div>
+      <div class="music-row"><span class="rank">01</span><span class="avatar">…</span><span class="mname"><span>loading…</span></span><span class="mcount"></span></div>
     </div>
 
     <div class="music-list" data-list="tracks">
-      <div class="music-row"><span class="rank">01</span><span class="avatar">?</span><span class="mname">connect your last.fm account below</span><span class="mcount"></span></div>
+      <div class="music-row"><span class="rank">01</span><span class="avatar square">…</span><span class="mname"><span>loading…</span></span><span class="mcount"></span></div>
     </div>
 
     <div class="music-list" data-list="albums">
-      <div class="music-row"><span class="rank">01</span><span class="avatar">?</span><span class="mname">connect your last.fm account below</span><span class="mcount"></span></div>
+      <div class="music-row"><span class="rank">01</span><span class="avatar square">…</span><span class="mname"><span>loading…</span></span><span class="mcount"></span></div>
     </div>
   </section>
 
@@ -763,22 +1350,35 @@
     <p class="eyebrow">— selected work</p>
     <h2>Projects</h2>
     <div class="project-grid">
-      <a href="#" class="project featured">
-        <h3>solusdt perpetual futures bot</h3>
-        <p>a high-speed python bot for trading sol/usdt perpetual futures. designed for crypto traders who need real-time updates and rapid order execution, this bot fetches market data every 0.1 seconds and executes trades based on an ai strategy.</p>
-        <div class="tags"><span>python</span></div>
+      <a href="#" class="project half">
+        <h3>luabridge</h3>
+        <p>a native lua scripting bridge that allows a c++ application to load scripts, expose selected apis, and safely execute plugins.</p>
+        <div class="tags"><span>lua</span><span>c++</span><span>cmake</span></div>
+      </a>
+      <a href="#" class="project half">
+        <h3>game admin cloud</h3>
+        <p>a web dashboard for managing a game's administrative settings, permissions, and moderation records.</p>
+        <div class="tags"><span>next.js</span><span>typescript</span><span>lua</span></div>
+      </a>
+      <a href="#" class="project half">
+        <h3>candle$$</h3>
+        <p>a chart-analysis tool with candlestick visualizations, moving averages, rsi, macd, and configurable indicators.</p>
+        <div class="tags"><span>python</span><span>plotly</span><span>fastapi</span></div>
       </a>
       <a href="#" class="project half">
         <h3>a to-do list app</h3>
         <p>a simple to-do list application built with python.</p>
         <div class="tags"><span>python</span></div>
       </a>
-      <a href="#" class="project half">
-        <h3>portofolio</h3>
-        <p>a personal portofolio website.</p>
-        <div class="tags"><span>html</span><span>css</span><span>javascript</span></div>
-      </a>
     </div>
+  </section>
+
+  <section class="tab-panel" id="panel-quests">
+    <p class="eyebrow">— current goals</p>
+    <h2>quest log</h2>
+    <p class="section-desc">what i'm working towards right now. main quests are the big ones, side quests are everything else.</p>
+    <div class="quest-stats" id="questStats"></div>
+    <div id="questLog"></div>
   </section>
 
   <section class="tab-panel" id="panel-contact">
@@ -789,9 +1389,78 @@
       <a href="mailto:cnt261900@cjevs.ro">email</a>
       <a href="https://github.com/rqtt">github</a>
     </div>
+
+    <div class="timecard">
+      <svg class="analog" viewBox="0 0 100 100" aria-hidden="true">
+        <circle class="face" cx="50" cy="50" r="47"/>
+        <g id="clockTicks"></g>
+        <line class="hand hand-h" id="handH" x1="50" y1="50" x2="50" y2="29"/>
+        <line class="hand hand-m" id="handM" x1="50" y1="50" x2="50" y2="17"/>
+        <line class="hand hand-s" id="handS" x1="50" y1="60" x2="50" y2="12"/>
+        <circle class="pin" cx="50" cy="50" r="3.2"/>
+      </svg>
+      <div class="tc-info">
+        <div><span class="tc-city">bucharest</span> <span class="tc-offset" id="tcOffset"></span></div>
+        <div class="tc-row">
+          <span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            <span id="tcDate">…</span>
+          </span>
+          <span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+            <span id="tcTime">…</span>
+          </span>
+          <span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+            <span id="tcCompare">…</span>
+          </span>
+        </div>
+        <!-- time.is asks for a visible link back to them — keep this link -->
+        <a href="https://time.is/Bucharest" id="time_is_link" class="tc-link" target="_blank" rel="nofollow noopener">
+          view on time.is
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
+        </a>
+        <span id="Bucharest_z707" class="ti-raw" aria-hidden="true"></span>
+      </div>
+    </div>
   </section>
 
 </main>
+
+<!-- discord profile popup -->
+<div class="dc-overlay" id="dcOverlay" aria-hidden="true">
+  <div class="dc-card" id="dcCard" role="dialog" aria-modal="true" aria-labelledby="dcName">
+    <div class="dc-banner" id="dcBanner"></div>
+    <button type="button" class="dc-close" id="dcClose" aria-label="close profile">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <div class="dc-avatar-wrap">
+      <img class="dc-avatar" id="dcAvatar" alt="">
+      <img class="avatar-deco" id="dcDeco" alt="" hidden>
+      <span class="status-dot offline" id="dcStatusDot"></span>
+    </div>
+    <div class="dc-bubble" id="dcCustom" hidden></div>
+    <div class="dc-body">
+      <div class="dc-name-row">
+        <span class="dc-name" id="dcName">teo</span>
+      </div>
+      <div class="dc-username" id="dcUsername">@rqtt</div>
+      <div class="dc-badges" id="dcBadges" hidden></div>
+      <div class="dc-section" id="dcAbout">
+        <h4>about me</h4>
+        <div class="dc-bio" id="dcBio"></div>
+      </div>
+      <div class="dc-section" id="dcActivity" hidden></div>
+      <div class="dc-meta" id="dcMeta"></div>
+      <button type="button" class="dc-copy" id="dcCopy">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/></svg>
+        <span id="dcCopyLabel">copy username</span>
+      </button>
+      <a class="dc-open" id="dcOpen" href="https://discord.com/users/350806073000722437" target="_blank" rel="noopener">open in discord ↗</a>
+    </div>
+    <div class="dc-effect" id="dcEffect" aria-hidden="true"></div>
+  </div>
+</div>
 
 <audio id="bgMusic" src="music.mp3" loop preload="auto"></audio>
 
@@ -804,16 +1473,381 @@
 </div>
 
 <script>
-  const enterScreen = document.getElementById('enterScreen');
+  // ============================================================
+  //  settings — edit these
+  // ============================================================
+  const CONFIG = {
+    instagram: 'onoseteodor',                       // your instagram username, without the @
+    timezone: 'Europe/Bucharest',
+    discordId: '350806073000722437',
+    // music tab. range: 'weeks' (last 4 weeks), 'months' (last 6 months) or 'lifetime'
+    statsfm: { user: 'rlse', range: 'weeks' },
+
+    profile: {
+      // shown in the popup while your discord "about me" is empty
+      bio: 'student & developer\nbuilding things at https://rqtt.cc',
+      // image or gif for the top of the popup. leave '' to use your discord banner (or a red gradient)
+      bannerUrl: '',
+      bannerColor: '#393a41',
+      // your discord profile effect (trapped souls), copied from discord's shop data.
+      // each layer plays `start` ms after the popup opens and lasts `duration` ms;
+      // looping layers replay after a `loopDelay` pause. `still` is shown to people with reduced motion on.
+      effect: {
+        name: 'trapped souls',
+        still: 'https://cdn.discordapp.com/media/v1/collectibles-shop/ed488d8c0950dde3be8facd759b0ea3d23af991d0d1dc72e5dd918eec98dd7c5',
+        layers: [
+          { src: 'https://cdn.discordapp.com/media/v1/collectibles-shop/3b74ba84c8941ad0d91afafd00d169b8124cd2956fcaa7fda3b784a6edafcba6', start: 0, duration: 4900, loop: false, loopDelay: 0, zIndex: 110 },
+          { src: 'https://cdn.discordapp.com/media/v1/collectibles-shop/ab4385a5a8e984e11ddd60bf8d5378f9ddc0f706bf6c1a0b5ba2a4df666c01fd', start: 7908, duration: 4908, loop: true, loopDelay: 3000, zIndex: 100 }
+        ]
+      },
+      // used if you remove the effect above: 'embers', 'snow', 'confetti', 'bats' or 'none'
+      fallbackEffect: 'embers',
+      // extra badges, e.g. { icon: 'https://cdn.discordapp.com/badge-icons/2ba85e8026a8614b640c2837bcdfe21b.png', label: 'nitro' }
+      badges: []
+    }
+  };
+
+  // ============================================================
+  //  quest log — your current goals
+  //  type: 'main' or 'side'
+  //  tick objectives with done: true and the progress bar fills itself in.
+  //  no objectives? use progress: 0-100 instead. done: true moves a quest to "completed".
+  // ============================================================
+  const QUEST_LOG = [
+    // ----- main quests -----
+    {
+      title: 'ace the math & sciences track',
+      type: 'main',
+      desc: 'keep my grades strong in math and the sciences this school year.',
+      reward: 'a solid base for everything i build',
+      objectives: [
+        { text: 'finish the first semester strong', done: false },
+        { text: 'finish the school year strong', done: false }
+      ]
+    },
+    {
+      title: 'learn typescript',
+      type: 'main',
+      desc: 'go from plain javascript to typed code and use it in a real project.',
+      reward: 'fewer bugs, cleaner code',
+      objectives: [
+        { text: 'learn the basics — types, interfaces, generics', done: true },
+        { text: 'convert a small project to typescript', done: false },
+        { text: 'build something new in typescript from scratch (game admin cloud)', done: true }
+      ]
+    },
+    {
+      title: 'put luabridge on github',
+      type: 'main',
+      desc: 'turn luabridge into something other developers can actually use.',
+      objectives: [
+        { text: 'write docs and a few examples', done: false },
+        { text: 'add tests', done: false },
+        { text: 'publish it on github', done: false }
+      ]
+    },
+
+    // ----- side quests -----
+    {
+      title: 'level up candle$$',
+      type: 'side',
+      desc: 'make the chart tool smarter and put it online.',
+      objectives: [
+        { text: 'add more indicators', done: false },
+        { text: 'add a backtesting mode', done: false },
+        { text: 'deploy it so anyone can try it', done: false }
+      ]
+    },
+    {
+      title: 'make my first full beat',
+      type: 'side',
+      desc: 'learn fl studio / ableton well enough to finish an actual track.',
+      objectives: [
+        { text: 'learn the daw basics', done: true },
+        { text: 'finish a one-minute loop', done: false },
+        { text: 'export it and share it', done: false }
+      ]
+    },
+    {
+      title: 'get good at blender',
+      type: 'side',
+      desc: 'go from simple models to full scenes.',
+      objectives: [
+        { text: 'model a complete scene', done: false },
+        { text: 'learn lighting and materials', done: false },
+        { text: 'render a short animation', done: false }
+      ]
+    },
+    {
+      title: 'volunteer with rotary',
+      type: 'side',
+      desc: 'help out with a community project this school year.',
+      progress: 50
+    },
+    {
+      title: 'go on another erasmus+ project',
+      type: 'side',
+      desc: 'meet new people and see another country.',
+      progress: 0
+    },
+
+    // ----- achievements (done: true puts them under "completed") -----
+    {
+      title: 'get into my dream high school',
+      type: 'main',
+      desc: 'got accepted into the high school i wanted most, on the math and sciences track.',
+      done: true
+    },
+    {
+      title: 'ship a c++ project',
+      type: 'main',
+      desc: 'built luabridge — a lua scripting bridge that lets c++ apps load scripts and run plugins safely.',
+      done: true
+    },
+    {
+      title: 'ship a full web app',
+      type: 'main',
+      desc: 'built game admin cloud, a dashboard for game admin settings, permissions and moderation, with next.js and typescript.',
+      done: true
+    },
+    {
+      title: 'put my site online',
+      type: 'main',
+      desc: 'got my own domain, rqtt.cc, and launched this portfolio on it.',
+      done: true
+    },
+    {
+      title: 'portfolio v2',
+      type: 'main',
+      desc: 'discord profile popup, quest log, holiday themes and a live clock.',
+      done: true
+    },
+    {
+      title: 'build a chart-analysis tool',
+      type: 'side',
+      desc: 'made candle$$ with python, plotly and fastapi — candlesticks, moving averages, rsi and macd.',
+      done: true
+    },
+    {
+      title: 'take part in erasmus+',
+      type: 'side',
+      desc: 'international projects that grew my communication, teamwork and cultural awareness.',
+      done: true
+    },
+    {
+      title: 'join the rotary club',
+      type: 'side',
+      desc: 'became a member of the romanian rotary club — leadership, volunteering and community work.',
+      done: true
+    },
+    {
+      title: 'pick up the design tools',
+      type: 'side',
+      desc: 'learned photoshop, after effects, canva and blender for visuals and edits.',
+      done: true
+    }
+  ];
+
+  // ============================================================
+  //  everything below runs the site
+  // ============================================================
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => Array.from(document.querySelectorAll(sel));
+  const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const safeId = s => (/^[\w-]+$/.test(String(s || '')) ? String(s) : '');
+
+  function formatRelativeTime(timestamp) {
+    const diffSec = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+    if (diffSec < 60) return 'just now';
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return diffMin + 'm ago';
+    const diffHr = Math.floor(diffMin / 60);
+    if (diffHr < 24) return diffHr + 'h ago';
+    const diffDay = Math.floor(diffHr / 24);
+    return diffDay + 'd ago';
+  }
+
+  function formatDuration(ms) {
+    const min = Math.max(0, Math.floor(ms / 60000));
+    if (min < 1) return 'just started';
+    if (min < 60) return 'for ' + min + 'm';
+    const h = Math.floor(min / 60);
+    return 'for ' + h + 'h ' + (min % 60) + 'm';
+  }
+
+  // ============================================================
+  //  seasonal + profile-effect particles
+  // ============================================================
+  function createParticles(canvas, mode, opts) {
+    opts = opts || {};
+    const ctx = canvas.getContext('2d');
+    const host = opts.host || null;
+    const css = getComputedStyle(document.documentElement);
+    const accent = css.getPropertyValue('--accent').trim() || '#e5484d';
+    const accent2 = css.getPropertyValue('--accent-2').trim() || accent;
+    const confettiColors = [accent, accent2, '#7bdff2', '#f2efea', '#b388ff'];
+    const rand = (a, b) => a + Math.random() * (b - a);
+    const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+    let w = 1, h = 1, raf = 0, last = 0, stopped = false, pools = [];
+
+    function drawBat(x, y, s, flap) {
+      const k = 0.35 + 0.65 * flap;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(s, s);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(-6, -8 * k, -14, -4 * k);
+      ctx.quadraticCurveTo(-11, 0, -12, 3 * k);
+      ctx.quadraticCurveTo(-8, 1, -6, 4);
+      ctx.quadraticCurveTo(-3, 2, 0, 3);
+      ctx.quadraticCurveTo(3, 2, 6, 4);
+      ctx.quadraticCurveTo(8, 1, 12, 3 * k);
+      ctx.quadraticCurveTo(11, 0, 14, -4 * k);
+      ctx.quadraticCurveTo(6, -8 * k, 0, 0);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(0, 0.5, 2.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    const KINDS = {
+      snow: {
+        make: init => ({ x: rand(0, w), y: init ? rand(0, h) : rand(-20, -4), r: rand(1, 3.4), vy: rand(0.35, 1.1), vx: rand(-0.2, 0.2), ph: rand(0, 6.28), a: rand(0.35, 0.9) }),
+        step: (p, t, f) => { p.y += p.vy * f; p.x += (p.vx + Math.sin(t / 900 + p.ph) * 0.3) * f; return p.y < h + 10; },
+        draw: p => { ctx.globalAlpha = p.a; ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283); ctx.fill(); }
+      },
+      confetti: {
+        make: init => ({ x: rand(0, w), y: init ? rand(-h * 0.5, h) : rand(-40, -10), cw: rand(5, 9), ch: rand(8, 14), vy: rand(0.9, 2.1), vx: rand(-0.5, 0.5), rot: rand(0, 6.28), vr: rand(-0.06, 0.06), flip: rand(0, 6.28), vf: rand(0.03, 0.09), c: pick(confettiColors), a: rand(0.6, 0.95) }),
+        step: (p, t, f) => { p.y += p.vy * f; p.x += p.vx * f; p.rot += p.vr * f; p.flip += p.vf * f; return p.y < h + 20; },
+        draw: p => {
+          ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.scale(1, Math.cos(p.flip));
+          ctx.globalAlpha = p.a; ctx.fillStyle = p.c; ctx.fillRect(-p.cw / 2, -p.ch / 2, p.cw, p.ch); ctx.restore();
+        }
+      },
+      bat: {
+        make: init => {
+          const dir = Math.random() < 0.5 ? 1 : -1;
+          const y = rand(h * 0.06, h * 0.7);
+          return { dir, x: init ? rand(0, w) : (dir > 0 ? -40 : w + 40), y, y0: y, s: rand(0.9, 1.8), vx: dir * rand(0.8, 1.8), ph: rand(0, 6.28), bob: rand(8, 26), a: rand(0.5, 0.85) };
+        },
+        step: (p, t, f) => { p.x += p.vx * f; p.y = p.y0 + Math.sin(t / 600 + p.ph) * p.bob; return p.dir > 0 ? p.x < w + 50 : p.x > -50; },
+        draw: (p, t) => { ctx.globalAlpha = p.a; ctx.fillStyle = accent2; drawBat(p.x, p.y, p.s, (Math.sin(t / 70 + p.ph) + 1) / 2); }
+      },
+      leaf: {
+        make: init => ({ x: rand(0, w), y: init ? rand(-h * 0.3, h) : rand(-30, -10), s: rand(3, 6), vy: rand(0.4, 1), sway: rand(0.5, 1.5), ph: rand(0, 6.28), rot: rand(0, 6.28), vr: rand(-0.03, 0.03), a: rand(0.35, 0.7) }),
+        step: (p, t, f) => { p.y += p.vy * f; p.x += Math.sin(t / 800 + p.ph) * p.sway * 0.4 * f; p.rot += p.vr * f; return p.y < h + 20; },
+        draw: p => {
+          ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.globalAlpha = p.a; ctx.fillStyle = accent;
+          ctx.beginPath(); ctx.ellipse(0, 0, p.s, p.s * 0.55, 0, 0, 6.283); ctx.fill(); ctx.restore();
+        }
+      },
+      ember: {
+        make: init => {
+          const max = rand(140, 320);
+          return { x: rand(0, w), y: init ? rand(h * 0.2, h) : h + rand(0, 10), r: rand(0.8, 2.4), vy: -rand(0.3, 1), vx: rand(-0.25, 0.25), life: init ? rand(0, max) : 0, max, ph: rand(0, 6.28) };
+        },
+        step: (p, t, f) => { p.life += f; p.y += p.vy * f; p.x += (p.vx + Math.sin(t / 500 + p.ph) * 0.25) * f; return p.life < p.max && p.y > -10; },
+        draw: p => {
+          ctx.globalAlpha = Math.sin((p.life / p.max) * Math.PI) * 0.9;
+          ctx.fillStyle = accent; ctx.shadowColor = accent; ctx.shadowBlur = 8;
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283); ctx.fill(); ctx.shadowBlur = 0;
+        }
+      }
+    };
+
+    // [kind, count on a 1280x800 screen, minimum count]
+    const PLAN = {
+      snow: [['snow', 140, 30]],
+      confetti: [['confetti', 110, 24]],
+      bats: [['bat', 7, 2], ['leaf', 30, 8]],
+      embers: [['ember', 90, 26]]
+    }[mode];
+    if (!PLAN) return { stop() {} };
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const r = host ? host.getBoundingClientRect() : { width: window.innerWidth, height: window.innerHeight };
+      w = Math.max(1, r.width);
+      h = Math.max(1, r.height);
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const area = Math.min((w * h) / (1280 * 800), 1.6);
+      pools = PLAN.map(([kind, base, min]) => {
+        const n = Math.max(min, Math.round(base * area));
+        const existing = pools.find(p => p.kind === kind);
+        const list = existing ? existing.list.slice(0, n) : [];
+        while (list.length < n) list.push(KINDS[kind].make(true));
+        return { kind, list };
+      });
+    }
+
+    function frame(now) {
+      if (stopped) return;
+      const f = last ? Math.min((now - last) / 16.67, 3) : 1;
+      last = now;
+      ctx.clearRect(0, 0, w, h);
+      for (const pool of pools) {
+        const K = KINDS[pool.kind];
+        for (let i = 0; i < pool.list.length; i++) {
+          if (!K.step(pool.list[i], now, f)) pool.list[i] = K.make(false);
+          K.draw(pool.list[i], now);
+        }
+      }
+      ctx.globalAlpha = 1;
+      raf = requestAnimationFrame(frame);
+    }
+
+    resize();
+    window.addEventListener('resize', resize);
+    raf = requestAnimationFrame(frame);
+    return {
+      stop() {
+        stopped = true;
+        cancelAnimationFrame(raf);
+        window.removeEventListener('resize', resize);
+        ctx.clearRect(0, 0, w, h);
+      }
+    };
+  }
+
+  // ============================================================
+  //  holiday themes (christmas 24 dec, halloween 31 oct, birthday 16 mar)
+  // ============================================================
+  const THEMES = {
+    christmas: { enter: 'merry christmas — enter', banner: '🎄 merry christmas!', fx: 'snow' },
+    halloween: { enter: 'enter… if you dare', banner: '🎃 happy halloween', fx: 'bats' },
+    birthday:  { enter: "it's my birthday — come in", banner: "🎂 it's my birthday today!", fx: 'confetti' }
+  };
+  const ACTIVE_THEME = window.SITE_THEME && THEMES[window.SITE_THEME] ? THEMES[window.SITE_THEME] : null;
+
+  function applyTheme() {
+    if (!ACTIVE_THEME) return;
+    $('#enterText').textContent = ACTIVE_THEME.enter;
+    const banner = $('#themeBanner');
+    banner.textContent = ACTIVE_THEME.banner;
+    banner.hidden = false;
+    if (!REDUCED_MOTION) createParticles($('#fxCanvas'), ACTIVE_THEME.fx);
+  }
+
+  // ============================================================
+  //  enter screen + navigation
+  // ============================================================
+  const enterScreen = $('#enterScreen');
   enterScreen.addEventListener('click', () => {
     enterScreen.classList.add('hidden');
     setTimeout(() => { enterScreen.style.display = 'none'; }, 650);
   });
 
-  const navItems = document.querySelectorAll('.nav-item');
-  const panels = document.querySelectorAll('.tab-panel');
-  const sidebar = document.getElementById('sidebar');
-  const mobileToggle = document.getElementById('mobileToggle');
+  const navItems = $$('.nav-item');
+  const panels = $$('.tab-panel');
+  const sidebar = $('#sidebar');
+  const mobileToggle = $('#mobileToggle');
 
   function switchTab(target) {
     navItems.forEach(item => {
@@ -827,7 +1861,8 @@
     });
     sidebar.classList.remove('open');
     mobileToggle.setAttribute('aria-expanded', 'false');
-    if (target === 'music') loadLastfm();
+    if (target === 'music') loadMusic();
+    if (target === 'quests') animateQuestBars();
   }
 
   navItems.forEach(item => {
@@ -839,157 +1874,689 @@
     mobileToggle.setAttribute('aria-expanded', String(isOpen));
   });
 
-  document.querySelectorAll('.music-tab').forEach(tab => {
+  // ============================================================
+  //  music tab (stats.fm)
+  // ============================================================
+  $$('.music-tab').forEach(tab => {
     tab.addEventListener('click', () => {
-      document.querySelectorAll('.music-tab').forEach(t => t.classList.remove('active'));
+      $$('.music-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       const list = tab.dataset.list;
-      document.querySelectorAll('.music-list').forEach(l => l.classList.toggle('active', l.dataset.list === list));
+      $$('.music-list').forEach(l => l.classList.toggle('active', l.dataset.list === list));
     });
   });
 
-  const LASTFM_API_KEY = 'f14d42409cb2aa3a93bac7ae7decb075';
-  const LASTFM_USERNAME = 'rqtt';
-  const LASTFM_PLACEHOLDER_HASH = '2a96cbd8b46e442fc41c2b86b821562f';
+  const STATSFM_RANGES = { weeks: 'over the last 4 weeks', months: 'over the last 6 months', lifetime: 'of all time' };
+  let musicLoaded = false;
 
-  document.getElementById('lastfmLink').href = 'https://www.last.fm/user/' + encodeURIComponent(LASTFM_USERNAME);
+  $('#statsfmLink').href = 'https://stats.fm/' + encodeURIComponent(CONFIG.statsfm.user);
+  $('#musicDesc').textContent = "what i've been listening to " + (STATSFM_RANGES[CONFIG.statsfm.range] || 'lately') + ', tracked via stats.fm.';
 
-  let lastfmLoaded = false;
+  // stats.fm sends huge 768px apple music covers; ask for a small one instead
+  const smallCover = url => (url ? String(url).replace(/\/\d+x\d+bb\.(jpg|png|webp)$/, '/160x160bb.$1') : null);
+  const artistNames = list => (list || []).map(a => a.name).filter(Boolean).join(', ');
 
-  function lastfmBestImage(images) {
-    if (!Array.isArray(images)) return null;
-    const pick = images.find(img => img.size === 'extralarge') || images[images.length - 1];
-    const url = pick && pick['#text'];
-    if (!url || url.includes(LASTFM_PLACEHOLDER_HASH)) return null;
-    return url;
+  function setAvatarImage(avatarEl, url) {
+    const img = new Image();
+    img.alt = '';
+    img.referrerPolicy = 'no-referrer';
+    img.onload = () => { avatarEl.appendChild(img); requestAnimationFrame(() => img.classList.add('loaded')); };
+    img.src = url;
+  }
+
+  function countLabel(item) {
+    if (item.streams != null) return Number(item.streams).toLocaleString('en-US') + (Number(item.streams) === 1 ? ' stream' : ' streams');
+    if (item.playedMs) return Math.round(item.playedMs / 60000).toLocaleString('en-US') + ' min';
+    return '';
   }
 
   function renderMusicList(listName, items) {
     const container = document.querySelector('.music-list[data-list="' + listName + '"]');
-    if (!container || !items || !items.length) return;
-    container.innerHTML = items.map((item, i) => {
-      const name = item.name || '';
-      const img = lastfmBestImage(item.image);
-      const avatar = img
-        ? '<img src="' + img + '" alt="">'
-        : name.charAt(0).toUpperCase();
-      return (
-        '<div class="music-row">' +
-          '<span class="rank">' + String(i + 1).padStart(2, '0') + '</span>' +
-          '<span class="avatar">' + avatar + '</span>' +
-          '<span class="mname">' + name + '</span>' +
-          '<span class="mcount">' + (item.playcount || '') + '</span>' +
-        '</div>'
-      );
-    }).join('');
+    if (!container) return;
+    if (!items.length) {
+      container.innerHTML = '<div class="music-row"><span class="mname"><span>nothing played in this period yet</span></span></div>';
+      return;
+    }
+    const square = listName === 'artists' ? '' : ' square';
+    container.innerHTML = items.map((it, i) => (
+      '<a class="music-row" href="' + esc(it.url) + '" target="_blank" rel="noopener">' +
+        '<span class="rank">' + String(i + 1).padStart(2, '0') + '</span>' +
+        '<span class="avatar' + square + '">' + esc((it.name || '?').charAt(0).toUpperCase()) + '</span>' +
+        '<span class="mname"><span>' + esc(it.name) + '</span>' + (it.sub ? '<small>' + esc(it.sub) + '</small>' : '') + '</span>' +
+        '<span class="mcount">' + esc(it.count) + '</span>' +
+      '</a>'
+    )).join('');
+    container.querySelectorAll('.avatar').forEach((avatarEl, i) => {
+      if (items[i].img) setAvatarImage(avatarEl, items[i].img);
+    });
   }
 
-  async function loadLastfm() {
-    if (lastfmLoaded) return;
-    if (!LASTFM_API_KEY || !LASTFM_USERNAME) return;
-    lastfmLoaded = true;
+  function showMusicError() {
+    $$('.music-list').forEach(list => {
+      list.innerHTML = '<div class="music-row"><span class="mname"><span>couldn\'t reach stats.fm right now</span></span></div>';
+    });
+  }
 
-    const base = 'https://ws.audioscrobbler.com/2.0/?format=json&api_key=' + LASTFM_API_KEY +
-                 '&user=' + encodeURIComponent(LASTFM_USERNAME) + '&period=1month&limit=5';
+  async function loadMusic() {
+    if (musicLoaded || !CONFIG.statsfm.user) return;
+    musicLoaded = true;
+    const base = 'https://api.stats.fm/api/v1/users/' + encodeURIComponent(CONFIG.statsfm.user) + '/top/';
+    const query = '?range=' + encodeURIComponent(CONFIG.statsfm.range || 'weeks') + '&limit=5';
+    const get = type => fetch(base + type + query).then(r => { if (!r.ok) throw new Error('stats.fm ' + r.status); return r.json(); });
 
     try {
-      const [artistsData, tracksData, albumsData] = await Promise.all([
-        fetch(base + '&method=user.gettopartists').then(r => r.json()),
-        fetch(base + '&method=user.gettoptracks').then(r => r.json()),
-        fetch(base + '&method=user.gettopalbums').then(r => r.json())
-      ]);
+      const [artists, tracks, albums] = await Promise.all([get('artists'), get('tracks'), get('albums')]);
 
-      if (artistsData.topartists) renderMusicList('artists', artistsData.topartists.artist);
-      if (tracksData.toptracks) renderMusicList('tracks', tracksData.toptracks.track);
-      if (albumsData.topalbums) renderMusicList('albums', albumsData.topalbums.album);
+      renderMusicList('artists', (artists.items || []).filter(x => x.artist).map(x => ({
+        name: x.artist.name,
+        sub: (x.artist.genres || []).slice(0, 2).join(', '),
+        img: x.artist.image,
+        url: 'https://stats.fm/artist/' + x.artist.id,
+        count: countLabel(x)
+      })));
+
+      renderMusicList('tracks', (tracks.items || []).filter(x => x.track).map(x => ({
+        name: x.track.name,
+        sub: artistNames(x.track.artists),
+        img: smallCover(x.track.albums && x.track.albums[0] && x.track.albums[0].image),
+        url: 'https://stats.fm/track/' + x.track.id,
+        count: countLabel(x)
+      })));
+
+      renderMusicList('albums', (albums.items || []).filter(x => x.album).map(x => ({
+        name: x.album.name,
+        sub: artistNames(x.album.artists),
+        img: smallCover(x.album.image),
+        url: 'https://stats.fm/album/' + x.album.id,
+        count: countLabel(x)
+      })));
     } catch (err) {
-      lastfmLoaded = false;
-      console.warn('Could not load last.fm stats:', err);
+      musicLoaded = false;
+      showMusicError();
+      console.warn('could not load stats.fm:', err);
     }
   }
 
-  const DISCORD_USER_ID = '350806073000722437';
+  // ============================================================
+  //  discord: live status (lanyard), profile (dstn), popup
+  // ============================================================
+  const discord = { lanyard: null, profile: null, profileTried: false };
+  const STATUS_LABELS = { online: 'online', idle: 'away', dnd: 'do not disturb', offline: 'offline' };
   const LAST_SEEN_KEY = 'portfolioDiscordLastSeen';
 
+  function getLocalLastSeen() {
+    try { return Number(localStorage.getItem(LAST_SEEN_KEY)) || null; } catch (e) { return null; }
+  }
+
+  function setLocalLastSeen(timestamp) {
+    try { localStorage.setItem(LAST_SEEN_KEY, String(timestamp)); } catch (e) {}
+  }
+
+  // newest of: the "last_seen" value in your lanyard kv (written by the optional github action),
+  // or the last time this visitor's browser saw you online
   function getLastSeen() {
-    try { return Number(localStorage.getItem(LAST_SEEN_KEY)) || null; }
-    catch (err) { return null; }
+    let kv = 0;
+    if (discord.lanyard && discord.lanyard.kv && discord.lanyard.kv.last_seen) {
+      kv = Number(discord.lanyard.kv.last_seen) || 0;
+      if (kv && kv < 1e12) kv *= 1000;
+    }
+    return Math.max(kv, getLocalLastSeen() || 0) || null;
   }
 
-  function setLastSeen(timestamp) {
-    try { localStorage.setItem(LAST_SEEN_KEY, String(timestamp)); }
-    catch (err) {}
+  function avatarUrl(user, size) {
+    if (user && user.avatar && safeId(user.id)) {
+      const ext = user.avatar.indexOf('a_') === 0 ? 'gif' : 'png';
+      return 'https://cdn.discordapp.com/avatars/' + safeId(user.id) + '/' + safeId(user.avatar) + '.' + ext + '?size=' + size;
+    }
+    let idx = 0;
+    try { idx = Number((BigInt(CONFIG.discordId) >> BigInt(22)) % BigInt(6)); } catch (e) {}
+    return 'https://cdn.discordapp.com/embed/avatars/' + idx + '.png';
   }
 
-  function formatRelativeTime(timestamp) {
-    const diffSec = Math.floor((Date.now() - timestamp) / 1000);
-    if (diffSec < 60) return 'just now';
-    const diffMin = Math.floor(diffSec / 60);
-    if (diffMin < 60) return diffMin + 'm ago';
-    const diffHr = Math.floor(diffMin / 60);
-    if (diffHr < 24) return diffHr + 'h ago';
-    const diffDay = Math.floor(diffHr / 24);
-    return diffDay + 'd ago';
+  function decorationUrl(user) {
+    const asset = user && user.avatar_decoration_data && safeId(user.avatar_decoration_data.asset);
+    return asset ? 'https://cdn.discordapp.com/avatar-decoration-presets/' + asset + '.png?size=240&passthrough=true' : null;
+  }
+
+  function setDecoration(el, user) {
+    const url = decorationUrl(user);
+    if (url) { el.src = url; el.hidden = false; } else { el.hidden = true; el.removeAttribute('src'); }
   }
 
   async function loadDiscordStatus() {
-    if (!DISCORD_USER_ID) return;
-    const textEl = document.getElementById('discordStatusText');
+    const textEl = $('#discordStatusText');
     try {
-      const res = await fetch('https://api.lanyard.rest/v1/users/' + DISCORD_USER_ID);
+      const res = await fetch('https://api.lanyard.rest/v1/users/' + CONFIG.discordId, { cache: 'no-store' });
       const json = await res.json();
       if (!json.success) {
-        textEl.textContent = 'not found — join discord.com/invite/lanyard';
+        textEl.textContent = 'not found — join discord.gg/lanyard';
         return;
       }
-
-      const { discord_user, discord_status } = json.data;
-      const badge = document.getElementById('discordBadge');
-      const avatarEl = document.getElementById('discordAvatar');
-      const placeholderEl = document.getElementById('discordAvatarPlaceholder');
-      const dotEl = document.getElementById('discordStatusDot');
-      const usernameEl = document.getElementById('discordUsername');
-      const lastSeenEl = document.getElementById('discordLastSeen');
-
-      if (discord_user.avatar) {
-        const ext = discord_user.avatar.startsWith('a_') ? 'gif' : 'png';
-        avatarEl.src = 'https://cdn.discordapp.com/avatars/' + discord_user.id + '/' + discord_user.avatar + '.' + ext + '?size=96';
-        avatarEl.style.display = 'block';
-        placeholderEl.style.display = 'none';
-      }
-
-      badge.href = 'https://discord.com/users/' + discord_user.id;
-      usernameEl.textContent = discord_user.username;
-      dotEl.className = 'status-dot ' + discord_status;
-      const labels = { online: 'online', idle: 'away', dnd: 'do not disturb', offline: 'offline' };
-      textEl.textContent = labels[discord_status] || discord_status;
-
-      if (discord_status === 'offline') {
-        const lastSeen = getLastSeen();
-        if (lastSeen) {
-          lastSeenEl.textContent = 'last seen ' + formatRelativeTime(lastSeen);
-          lastSeenEl.style.display = 'block';
-        } else {
-          lastSeenEl.style.display = 'none';
-        }
-      } else {
-        setLastSeen(Date.now());
-        lastSeenEl.style.display = 'none';
-      }
+      discord.lanyard = json.data;
+      if (json.data.discord_status !== 'offline') setLocalLastSeen(Date.now());
+      renderDiscordBadge();
+      if (popupOpen) renderPopup();
     } catch (err) {
-      textEl.textContent = 'connection failed — see chat for why';
-      console.warn('Could not load Discord status:', err);
+      textEl.textContent = 'status unavailable';
+      console.warn('could not load discord status:', err);
     }
   }
 
-  loadDiscordStatus();
-  setInterval(loadDiscordStatus, 60000);
+  function renderDiscordBadge() {
+    const L = discord.lanyard;
+    if (!L) return;
+    const user = L.discord_user;
+    const status = L.discord_status;
 
-  const bgMusic = document.getElementById('bgMusic');
-  const musicToggle = document.getElementById('musicToggle');
-  const iconPlay = document.getElementById('iconPlay');
-  const iconPause = document.getElementById('iconPause');
-  const volumeSlider = document.getElementById('volumeSlider');
+    const avatarEl = $('#discordAvatar');
+    avatarEl.src = avatarUrl(user, 256);
+    avatarEl.style.display = 'block';
+    $('#discordAvatarPlaceholder').style.display = 'none';
+    setDecoration($('#discordDeco'), user);
+
+    $('#discordUsername').textContent = user.username;
+    $('#discordStatusDot').className = 'status-dot ' + status;
+    $('#discordStatusText').textContent = STATUS_LABELS[status] || status;
+
+    const lastSeenEl = $('#discordLastSeen');
+    const seen = status === 'offline' ? getLastSeen() : null;
+    lastSeenEl.textContent = seen ? 'last seen ' + formatRelativeTime(seen) : '';
+    lastSeenEl.style.display = seen ? 'block' : 'none';
+  }
+
+  async function loadDiscordProfile() {
+    if (discord.profileTried) return;
+    discord.profileTried = true;
+    try {
+      const res = await fetch('https://dcdn.dstn.to/profile/' + CONFIG.discordId);
+      if (!res.ok) return;
+      const json = await res.json();
+      if (json && json.user) {
+        discord.profile = json;
+        if (popupOpen) renderPopup();
+      }
+    } catch (e) {
+      // not available — the popup falls back to the settings at the top of the script
+    }
+  }
+
+  const FLAG_BADGES = [
+    [1 << 0, '5e74e9b61934fc1f67c65515d1f7e60d', 'discord staff'],
+    [1 << 1, '3f9748e53446a137a052f3454e2de41e', 'partnered server owner'],
+    [1 << 2, 'bf01d1073931f921909045f3a39fd264', 'hypesquad events'],
+    [1 << 3, '2717692c7dca7289b35297368a940dd0', 'bug hunter'],
+    [1 << 6, '8a88d63823d8a71cd5e390baa45efa02', 'hypesquad bravery'],
+    [1 << 7, '011940fd013da3f7fb926e4a1cd2e618', 'hypesquad brilliance'],
+    [1 << 8, '3aa41de486fa12454c3761e8e223442e', 'hypesquad balance'],
+    [1 << 9, '7060786766c9c840eb3019e725d2b358', 'early supporter'],
+    [1 << 14, '848f79194d4be5ff5f81505cbd0ce1e6', 'bug hunter'],
+    [1 << 17, '6df5892e0f35b051f8b61eace34f4967', 'early verified bot developer'],
+    [1 << 18, 'fee1624003e2fee35cb398e125dc479b', 'moderator programs alumni'],
+    [1 << 22, '6bdc42827a38498929a4920da12695d9', 'active developer']
+  ];
+
+  function collectBadges(user, profile) {
+    const out = [];
+    if (profile && Array.isArray(profile.badges)) {
+      profile.badges.forEach(b => {
+        if (safeId(b.icon)) out.push({ icon: 'https://cdn.discordapp.com/badge-icons/' + b.icon + '.png', label: b.description, link: b.link });
+      });
+    } else {
+      const flags = Number(user.public_flags) || 0;
+      FLAG_BADGES.forEach(([bit, icon, label]) => {
+        if (flags & bit) out.push({ icon: 'https://cdn.discordapp.com/badge-icons/' + icon + '.png', label });
+      });
+    }
+    return out.concat(CONFIG.profile.badges || []);
+  }
+
+  function formatBio(text) {
+    const re = /<(a?):(\w+):(\d+)>|(https?:\/\/[^\s<]+)/g;
+    let out = '', last = 0, m;
+    while ((m = re.exec(text))) {
+      out += esc(text.slice(last, m.index));
+      if (m[3]) {
+        out += '<img class="dc-emoji" src="https://cdn.discordapp.com/emojis/' + m[3] + '.' + (m[1] ? 'gif' : 'png') + '?size=48" alt=":' + esc(m[2]) + ':">';
+      } else {
+        out += '<a href="' + esc(m[4]) + '" target="_blank" rel="noopener">' + esc(m[4]) + '</a>';
+      }
+      last = re.lastIndex;
+    }
+    return out + esc(text.slice(last));
+  }
+
+  function activityImage(act) {
+    const img = act.assets && act.assets.large_image;
+    if (!img) return null;
+    if (img.indexOf('mp:') === 0) return 'https://media.discordapp.net/' + img.slice(3);
+    if (img.indexOf('spotify:') === 0) return 'https://i.scdn.co/image/' + safeId(img.slice(8));
+    if (safeId(act.application_id) && safeId(img)) return 'https://cdn.discordapp.com/app-assets/' + act.application_id + '/' + img + '.png';
+    return null;
+  }
+
+  const ACTIVITY_VERBS = { 0: 'playing', 1: 'streaming', 2: 'listening to', 3: 'watching', 5: 'competing in' };
+  const CHECK_SVG = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>';
+
+  function renderPopup() {
+    const L = discord.lanyard || {};
+    const P = discord.profile || null;
+    const user = Object.assign({ id: CONFIG.discordId }, (P && P.user) || {}, L.discord_user || {});
+    const userProfile = (P && P.user_profile) || {};
+    const status = L.discord_status || 'offline';
+    const activities = L.activities || [];
+
+    // banner
+    const bannerEl = $('#dcBanner');
+    let bannerColor = user.banner_color || CONFIG.profile.bannerColor;
+    if (!/^#[0-9a-f]{3,8}$/i.test(bannerColor)) bannerColor = '#393a41';
+    let bannerImg = CONFIG.profile.bannerUrl;
+    if (!bannerImg && safeId(user.banner)) {
+      bannerImg = 'https://cdn.discordapp.com/banners/' + safeId(user.id) + '/' + user.banner + '.' + (user.banner.indexOf('a_') === 0 ? 'gif' : 'png') + '?size=600';
+    }
+    bannerEl.style.backgroundColor = bannerColor;
+    // same as discord: your banner image if you have one, otherwise your solid banner colour
+    bannerEl.style.backgroundImage = bannerImg ? 'url("' + bannerImg.replace(/"/g, '%22') + '")' : 'none';
+
+    // avatar, decoration, status
+    $('#dcAvatar').src = avatarUrl(user, 256);
+    setDecoration($('#dcDeco'), user);
+    const dot = $('#dcStatusDot');
+    dot.className = 'status-dot ' + status;
+    dot.title = STATUS_LABELS[status] || status;
+
+    // custom status bubble
+    const custom = activities.find(a => a.type === 4);
+    const bubble = $('#dcCustom');
+    if (custom && (custom.state || custom.emoji)) {
+      let emoji = '';
+      if (custom.emoji) {
+        emoji = safeId(custom.emoji.id)
+          ? '<img src="https://cdn.discordapp.com/emojis/' + custom.emoji.id + '.' + (custom.emoji.animated ? 'gif' : 'png') + '?size=32" alt="">'
+          : esc(custom.emoji.name);
+      }
+      bubble.innerHTML = emoji + (custom.state ? '<span>' + esc(custom.state) + '</span>' : '');
+      bubble.hidden = false;
+    } else {
+      bubble.hidden = true;
+    }
+
+    // names
+    $('#dcName').textContent = user.global_name || user.display_name || user.username || 'teo';
+    $('#dcUsername').textContent = '@' + (user.username || 'rqtt');
+
+    // badges
+    const badges = collectBadges(user, P);
+    const badgesEl = $('#dcBadges');
+    badgesEl.innerHTML = badges.map(b => {
+      const img = '<img src="' + esc(b.icon) + '" alt="' + esc(b.label || '') + '" title="' + esc(b.label || '') + '">';
+      return b.link ? '<a href="' + esc(b.link) + '" target="_blank" rel="noopener">' + img + '</a>' : '<span>' + img + '</span>';
+    }).join('');
+    badgesEl.hidden = !badges.length;
+
+    // about me
+    const bio = String(userProfile.bio || user.bio || '').trim() || CONFIG.profile.bio;
+    $('#dcBio').innerHTML = formatBio(bio || '');
+    $('#dcAbout').hidden = !bio;
+
+    // current activity
+    const act = activities.find(a => a.type !== 4);
+    const actEl = $('#dcActivity');
+    if (act) {
+      const img = activityImage(act);
+      const lines = [act.details, act.state].filter(Boolean).map(t => '<span>' + esc(t) + '</span>').join('');
+      const time = act.timestamps && act.timestamps.start
+        ? '<span class="dc-act-time" data-start="' + Number(act.timestamps.start) + '">' + formatDuration(Date.now() - act.timestamps.start) + '</span>'
+        : '';
+      actEl.innerHTML =
+        '<h4>' + esc((ACTIVITY_VERBS[act.type] || 'playing') + ' ' + act.name) + '</h4>' +
+        '<div class="dc-act">' +
+          (img ? '<img class="dc-act-img" src="' + esc(img) + '" alt="">' : '<div class="dc-act-img dc-act-ph">' + esc((act.name || '?').charAt(0)) + '</div>') +
+          '<div class="dc-act-text">' + (lines || '<span>' + esc(act.name) + '</span>') + time + '</div>' +
+        '</div>';
+      actEl.hidden = false;
+    } else {
+      actEl.hidden = true;
+    }
+
+    // status line + last seen
+    let meta = STATUS_LABELS[status] || status;
+    if (status === 'offline') {
+      const seen = getLastSeen();
+      if (seen) meta += ' · last seen ' + formatRelativeTime(seen);
+    } else {
+      const where = ['desktop', 'mobile', 'web'].filter(k => L['active_on_discord_' + k]);
+      if (where.length) meta += ' on ' + where.join(' & ');
+    }
+    $('#dcMeta').innerHTML = '<span class="mini-dot ' + esc(status) + '"></span><span>' + esc(meta) + '</span>';
+    $('#dcOpen').href = 'https://discord.com/users/' + (safeId(user.id) || CONFIG.discordId);
+  }
+
+  // popup open / close
+  const overlay = $('#dcOverlay');
+  const card = $('#dcCard');
+  let popupOpen = false, lastFocus = null, effectFx = null, effectTimers = [], effectRun = 0;
+  const effectPreloads = {};
+
+  // the effect files are big (several mb), so they only start downloading once someone
+  // points at / taps your discord picture
+  function preloadEffect() {
+    const fx = CONFIG.profile.effect;
+    if (!fx || !fx.layers || REDUCED_MOTION) return Promise.resolve();
+    return Promise.all(fx.layers.map(layer => {
+      if (!effectPreloads[layer.src]) {
+        effectPreloads[layer.src] = new Promise(resolve => {
+          const img = new Image();
+          img.onload = img.onerror = () => resolve(img);
+          img.src = layer.src;
+        });
+      }
+      return effectPreloads[layer.src];
+    }));
+  }
+
+  // plays one layer the way discord does: show it at `start`, hide it after `duration`,
+  // and for looping layers play it again after `loopDelay`.
+  // re-setting src is what makes an animated png that already finished start over.
+  function playLayer(box, layer, run) {
+    const img = new Image();
+    img.alt = '';
+    img.style.zIndex = layer.zIndex || 1;
+    img.hidden = true;
+    box.appendChild(img);
+    const later = (fn, ms) => effectTimers.push(setTimeout(() => { if (run === effectRun) fn(); }, Math.max(0, ms || 0)));
+    const show = () => {
+      img.src = '';
+      img.src = layer.src;
+      img.hidden = false;
+      later(hide, layer.duration);
+    };
+    const hide = () => {
+      img.hidden = true;
+      if (layer.loop) later(show, layer.loopDelay);
+    };
+    later(show, layer.start);
+  }
+
+  function startEffect() {
+    const box = $('#dcEffect');
+    box.innerHTML = '';
+    const run = ++effectRun;
+    const fx = CONFIG.profile.effect;
+
+    if (fx && fx.layers && fx.layers.length) {
+      if (REDUCED_MOTION) {
+        if (fx.still) {
+          const img = new Image();
+          img.alt = '';
+          img.src = fx.still;
+          box.appendChild(img);
+        }
+        return;
+      }
+      // wait for the files (up to 6s) so the intro plays from the start instead of half-loaded
+      Promise.race([preloadEffect(), new Promise(r => setTimeout(r, 6000))]).then(() => {
+        if (run !== effectRun) return;
+        fx.layers.forEach(layer => playLayer(box, layer, run));
+      });
+      return;
+    }
+
+    const mode = ACTIVE_THEME ? ACTIVE_THEME.fx : CONFIG.profile.fallbackEffect;
+    if (REDUCED_MOTION || !mode || mode === 'none') return;
+    const canvas = document.createElement('canvas');
+    box.appendChild(canvas);
+    effectFx = createParticles(canvas, mode, { host: card });
+  }
+
+  function stopEffect() {
+    effectRun++;
+    effectTimers.forEach(clearTimeout);
+    effectTimers = [];
+    if (effectFx) { effectFx.stop(); effectFx = null; }
+    $('#dcEffect').innerHTML = '';
+  }
+
+  ['pointerenter', 'focus', 'touchstart'].forEach(type => {
+    $('#discordBadge').addEventListener(type, () => { preloadEffect(); }, { once: true, passive: true });
+  });
+
+  function openPopup() {
+    lastFocus = document.activeElement;
+    popupOpen = true;
+    renderPopup();
+    overlay.classList.add('open');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    card.scrollTop = 0;
+    requestAnimationFrame(() => { startEffect(); $('#dcClose').focus(); });
+    loadDiscordProfile();
+    loadDiscordStatus();
+  }
+
+  function closePopup() {
+    if (!popupOpen) return;
+    popupOpen = false;
+    overlay.classList.remove('open');
+    overlay.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    stopEffect();
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+
+  $('#discordBadge').addEventListener('click', openPopup);
+  $('#dcClose').addEventListener('click', closePopup);
+  overlay.addEventListener('click', e => { if (e.target === overlay) closePopup(); });
+
+  document.addEventListener('keydown', e => {
+    if (!popupOpen) return;
+    if (e.key === 'Escape') { closePopup(); return; }
+    if (e.key === 'Tab') {
+      const focusable = Array.from(card.querySelectorAll('button, a[href]'));
+      const first = focusable[0], lastEl = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); lastEl.focus(); }
+      else if (!e.shiftKey && document.activeElement === lastEl) { e.preventDefault(); first.focus(); }
+    }
+  });
+
+  $('#dcCopy').addEventListener('click', async () => {
+    const name = (discord.lanyard && discord.lanyard.discord_user && discord.lanyard.discord_user.username) || 'rqtt';
+    const label = $('#dcCopyLabel');
+    let ok = false;
+    try {
+      await navigator.clipboard.writeText(name);
+      ok = true;
+    } catch (e) {
+      const ta = document.createElement('textarea');
+      ta.value = name;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { ok = document.execCommand('copy'); } catch (e2) {}
+      ta.remove();
+    }
+    label.textContent = ok ? 'copied!' : name;
+    clearTimeout(label._t);
+    label._t = setTimeout(() => { label.textContent = 'copy username'; }, 1600);
+  });
+
+  // keep "last seen 5m ago" / activity timers fresh
+  setInterval(() => {
+    renderDiscordBadge();
+    $$('.dc-act-time').forEach(el => { el.textContent = formatDuration(Date.now() - Number(el.dataset.start)); });
+  }, 30000);
+
+  // ============================================================
+  //  contact tab clock (synced with time.is)
+  // ============================================================
+  let clockOffset = 0;
+  const TZ = CONFIG.timezone;
+  const partsFmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23'
+  });
+  const dateFmt = new Intl.DateTimeFormat('en-US', { timeZone: TZ, weekday: 'short', month: 'long', day: 'numeric' });
+  const timeFmt = new Intl.DateTimeFormat('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit', hour12: true });
+
+  function zonedParts(date) {
+    const o = {};
+    partsFmt.formatToParts(date).forEach(p => { o[p.type] = p.value; });
+    return { y: +o.year, mo: +o.month, d: +o.day, h: (+o.hour) % 24, mi: +o.minute, s: +o.second };
+  }
+
+  function zonedWallMs(date) {
+    const p = zonedParts(date);
+    return Date.UTC(p.y, p.mo - 1, p.d, p.h, p.mi, p.s);
+  }
+
+  function zoneOffsetMinutes(date) {
+    return Math.round((zonedWallMs(date) - Math.floor(date.getTime() / 1000) * 1000) / 60000);
+  }
+
+  function formatHours(min) {
+    const h = Math.floor(min / 60), m = min % 60;
+    return (h ? h + 'h' : '') + (m ? (h ? ' ' : '') + m + 'm' : '');
+  }
+
+  function buildClockFace() {
+    const g = $('#clockTicks');
+    let html = '';
+    for (let i = 0; i < 12; i++) {
+      const a = (i * 30) * Math.PI / 180;
+      const big = i % 3 === 0;
+      const r1 = big ? 37 : 40, r2 = 43;
+      html += '<line class="tick" stroke-width="' + (big ? 2.6 : 1.4) + '" x1="' + (50 + r1 * Math.sin(a)).toFixed(2) + '" y1="' + (50 - r1 * Math.cos(a)).toFixed(2) +
+              '" x2="' + (50 + r2 * Math.sin(a)).toFixed(2) + '" y2="' + (50 - r2 * Math.cos(a)).toFixed(2) + '"/>';
+    }
+    g.innerHTML = html;
+  }
+
+  function tickClock() {
+    const now = new Date(Date.now() + clockOffset);
+    const p = zonedParts(now);
+    $('#handH').setAttribute('transform', 'rotate(' + ((p.h % 12) * 30 + p.mi * 0.5) + ' 50 50)');
+    $('#handM').setAttribute('transform', 'rotate(' + (p.mi * 6 + p.s * 0.1) + ' 50 50)');
+    $('#handS').setAttribute('transform', 'rotate(' + (p.s * 6) + ' 50 50)');
+    $('#tcDate').textContent = dateFmt.format(now);
+    $('#tcTime').textContent = timeFmt.format(now);
+
+    const zone = zoneOffsetMinutes(now);
+    const sign = zone >= 0 ? '+' : '-';
+    const abs = Math.abs(zone);
+    $('#tcOffset').textContent = '(utc' + sign + Math.floor(abs / 60) + (abs % 60 ? ':' + String(abs % 60).padStart(2, '0') : '') + ')';
+
+    const diff = zone - (-now.getTimezoneOffset());
+    $('#tcCompare').textContent = diff === 0
+      ? 'same timezone as you'
+      : formatHours(Math.abs(diff)) + (diff > 0 ? ' ahead of you' : ' behind you');
+  }
+
+  function clockLoop() {
+    tickClock();
+    setTimeout(clockLoop, 1000 - ((Date.now() + clockOffset) % 1000) + 10);
+  }
+
+  // time.is reports the exact bucharest time; we use it to correct a visitor's clock if it's off
+  function onTimeIsText(text) {
+    const m = /(\d{1,2}):(\d{2}):(\d{2})\D+(\d{4})-(\d{2})-(\d{2})/.exec(String(text || ''));
+    if (!m) return;
+    const official = Date.UTC(+m[4], +m[5] - 1, +m[6], +m[1], +m[2], +m[3]);
+    const diff = official - zonedWallMs(new Date());
+    clockOffset = Math.abs(diff) >= 2000 ? diff : 0;
+  }
+
+  window.teoTimeIsTick = function (rendered) { onTimeIsText(rendered); };
+  window.teoTimeIsTick.toString = () => 'teoTimeIsTick';
+
+  function loadTimeIs() {
+    const raw = $('#Bucharest_z707');
+    new MutationObserver(() => onTimeIsText(raw.textContent)).observe(raw, { childList: true, characterData: true, subtree: true });
+    const s = document.createElement('script');
+    s.src = 'https://widget.time.is/en.js';
+    s.async = true;
+    s.onload = () => {
+      try {
+        window.time_is_widget.init({
+          Bucharest_z707: {
+            template: 'TIME|DATE',
+            time_format: 'hours:minutes:seconds',
+            date_format: 'year-monthnum-daynum',
+            callback: window.teoTimeIsTick
+          }
+        });
+      } catch (e) { console.warn('time.is widget failed:', e); }
+    };
+    document.head.appendChild(s);
+  }
+
+  // ============================================================
+  //  quest log
+  // ============================================================
+  function questCard(q) {
+    const objectives = q.objs.length
+      ? '<ul class="quest-objectives">' + q.objs.map(o =>
+          '<li class="' + (o.done ? 'done' : '') + '"><span class="check">' + (o.done ? CHECK_SVG : '') + '</span><span>' + esc(o.text) + '</span></li>'
+        ).join('') + '</ul>'
+      : '';
+    return (
+      '<article class="quest ' + q.type + (q.done ? ' completed' : '') + '">' +
+        '<div class="quest-head">' +
+          '<span class="quest-type">' + (q.done ? 'completed' : q.type + ' quest') + '</span>' +
+          '<h4 class="quest-title">' + esc(q.title) + '</h4>' +
+          '<span class="quest-pct">' + q.pct + '%</span>' +
+        '</div>' +
+        (q.desc ? '<p class="quest-desc">' + esc(q.desc) + '</p>' : '') +
+        '<div class="quest-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + q.pct + '"><span data-w="' + q.pct + '"></span></div>' +
+        objectives +
+        (q.reward ? '<p class="quest-reward">reward: <b>' + esc(q.reward) + '</b></p>' : '') +
+      '</article>'
+    );
+  }
+
+  function renderQuests() {
+    const quests = QUEST_LOG.map(q => {
+      const objs = Array.isArray(q.objectives) ? q.objectives : [];
+      let pct = typeof q.progress === 'number'
+        ? q.progress
+        : (objs.length ? (objs.filter(o => o.done).length / objs.length) * 100 : 0);
+      const done = !!q.done || pct >= 100;
+      pct = done ? 100 : Math.max(0, Math.min(100, Math.round(pct)));
+      return Object.assign({}, q, { objs, pct, done, type: q.type === 'side' ? 'side' : 'main' });
+    });
+
+    const groups = [
+      ['main quests', quests.filter(q => !q.done && q.type === 'main')],
+      ['side quests', quests.filter(q => !q.done && q.type === 'side')],
+      ['completed', quests.filter(q => q.done)]
+    ].filter(g => g[1].length);
+
+    const active = quests.filter(q => !q.done).length;
+    const completed = quests.length - active;
+    $('#questStats').innerHTML =
+      '<span><b>' + active + '</b> active</span>' +
+      '<span><b>' + completed + '</b> completed</span>' +
+      '<span>level <b>' + (completed + 1) + '</b></span>';
+
+    $('#questLog').innerHTML = groups.length
+      ? groups.map(([label, list]) => '<div class="quest-group"><h3>' + esc(label) + '</h3>' + list.map(questCard).join('') + '</div>').join('')
+      : '<p class="section-desc">no quests yet.</p>';
+  }
+
+  function animateQuestBars() {
+    $$('#questLog .quest-bar span').forEach(bar => {
+      bar.style.width = '0';
+      requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = bar.dataset.w + '%'; }));
+    });
+  }
+
+  // ============================================================
+  //  background music player
+  // ============================================================
+  const bgMusic = $('#bgMusic');
+  const musicToggle = $('#musicToggle');
+  const iconPlay = $('#iconPlay');
+  const iconPause = $('#iconPause');
+  const volumeSlider = $('#volumeSlider');
 
   bgMusic.volume = volumeSlider.value / 100;
 
@@ -1020,6 +2587,20 @@
     document.addEventListener('click', startOnInteraction, { once: true });
     document.addEventListener('keydown', startOnInteraction, { once: true });
   });
+
+  // ============================================================
+  //  start everything
+  // ============================================================
+  if (CONFIG.instagram) $('#instagramLink').href = 'https://www.instagram.com/' + encodeURIComponent(CONFIG.instagram) + '/';
+
+  applyTheme();
+  renderQuests();
+  buildClockFace();
+  clockLoop();
+  loadTimeIs();
+  loadDiscordStatus();
+  setInterval(loadDiscordStatus, 60000);
+  setTimeout(loadDiscordProfile, 1500);
 </script>
 
 </body>
