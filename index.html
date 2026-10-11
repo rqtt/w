@@ -10,9 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <script>
-  // ===== holiday themes =====
-  // [month, day] in your timezone (bucharest). each theme only shows on that exact day.
-  // preview any theme on any day by adding ?theme=christmas, ?theme=halloween or ?theme=birthday to the url.
+  // themes [month, day]. test with ?theme=christmas / halloween / birthday
   window.THEME_DATES = { christmas: [12, 24], halloween: [10, 31], birthday: [3, 16] };
 
   (function () {
@@ -76,7 +74,7 @@
     text-transform: lowercase;
   }
 
-  /* browsers don't pass text-transform down to buttons by default — this is what kept "Artists" capitalised */
+  /* buttons dont inherit text-transform */
   button { text-transform: inherit; }
 
   a { color: inherit; }
@@ -102,7 +100,7 @@
     margin: 0 0 28px 0;
   }
 
-  /* ===== seasonal particles ===== */
+  /* seasonal particles */
   #fxCanvas {
     position: fixed;
     inset: 0;
@@ -112,7 +110,7 @@
     z-index: 1500;
   }
 
-  /* ===== enter screen ===== */
+  /* enter screen */
   .enter-screen {
     position: fixed;
     inset: 0;
@@ -154,7 +152,7 @@
 
   @keyframes enterPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-  /* ===== sidebar ===== */
+  /* sidebar */
   .sidebar {
     position: fixed;
     top: 0; left: 0; bottom: 0;
@@ -255,7 +253,7 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* ===== home ===== */
+  /* home */
   #panel-home.active {
     display: flex;
     flex-direction: column;
@@ -468,7 +466,7 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* ===== about / skills ===== */
+  /* about / skills */
   #panel-about p {
     color: var(--paper);
     max-width: 62ch;
@@ -498,7 +496,7 @@
 
   .pill:hover { border-color: var(--accent); }
 
-  /* ===== music ===== */
+  /* music */
   .music-link {
     display: inline-block;
     margin-bottom: 28px;
@@ -616,7 +614,7 @@
 
   .music-row .mcount { color: var(--muted); font-size: 0.82rem; flex: none; }
 
-  /* ===== projects ===== */
+  /* projects */
   .project-grid {
     display: grid;
     grid-template-columns: repeat(12, 1fr);
@@ -658,7 +656,7 @@
     border-radius: 4px;
   }
 
-  /* ===== quest log ===== */
+  /* quest log */
   .quest-stats {
     display: flex;
     flex-wrap: wrap;
@@ -775,7 +773,7 @@
 
   .quest-reward b { color: var(--paper); font-weight: 600; }
 
-  /* ===== contact ===== */
+  /* contact */
   #panel-contact > p { color: var(--muted); max-width: 50ch; font-size: 1.05rem; }
 
   .contact-links {
@@ -852,7 +850,7 @@
   .tc-link:hover { background: #ffffff; }
   .ti-raw { display: none; }
 
-  /* ===== discord profile popup ===== */
+  /* discord profile popup */
   .dc-overlay {
     position: fixed;
     inset: 0;
@@ -1119,7 +1117,7 @@
 
   .dc-effect canvas { position: absolute; top: 0; left: 0; }
 
-  /* ===== background music player ===== */
+  /* background music player */
   .music-player {
     position: fixed;
     bottom: 22px;
@@ -1197,7 +1195,7 @@
     .timecard { flex-direction: column; align-items: flex-start; }
   }
 
-  /* kept last so it wins: with motion turned off, show everything instead of leaving it invisible */
+  /* reduced motion */
   @media (prefers-reduced-motion: reduce) {
     * { animation: none !important; transition-duration: 0.01ms !important; }
     .home-title, .home-role, .home-links, .discord-profile, .theme-banner { opacity: 1; }
@@ -1415,7 +1413,7 @@
             <span id="tcCompare">…</span>
           </span>
         </div>
-        <!-- time.is asks for a visible link back to them — keep this link -->
+        <!-- time.is wants this link visible -->
         <a href="https://time.is/Bucharest" id="time_is_link" class="tc-link" target="_blank" rel="nofollow noopener">
           view on time.is
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
@@ -1427,7 +1425,7 @@
 
 </main>
 
-<!-- discord profile popup -->
+<!-- discord popup -->
 <div class="dc-overlay" id="dcOverlay" aria-hidden="true">
   <div class="dc-card" id="dcCard" role="dialog" aria-modal="true" aria-labelledby="dcName">
     <div class="dc-banner" id="dcBanner"></div>
@@ -1473,25 +1471,21 @@
 </div>
 
 <script>
-  // ============================================================
-  //  settings — edit these
-  // ============================================================
+  // settings
   const CONFIG = {
-    instagram: 'onoseteodor',                       // your instagram username, without the @
+    instagram: 'onoseteodor',
     timezone: 'Europe/Bucharest',
     discordId: '350806073000722437',
-    // music tab. range: 'weeks' (last 4 weeks), 'months' (last 6 months) or 'lifetime'
+    // range: weeks / months / lifetime
     statsfm: { user: 'rlse', range: 'weeks' },
 
     profile: {
-      // shown in the popup while your discord "about me" is empty
+      // used if my discord bio is empty
       bio: 'student & developer\nbuilding things at https://rqtt.cc',
-      // image or gif for the top of the popup. leave '' to use your discord banner (or a red gradient)
+      // empty = use discord banner
       bannerUrl: '',
       bannerColor: '#393a41',
-      // your discord profile effect (trapped souls), copied from discord's shop data.
-      // each layer plays `start` ms after the popup opens and lasts `duration` ms;
-      // looping layers replay after a `loopDelay` pause. `still` is shown to people with reduced motion on.
+      // profile effect (from discord shop data)
       effect: {
         name: 'trapped souls',
         still: 'https://cdn.discordapp.com/media/v1/collectibles-shop/ed488d8c0950dde3be8facd759b0ea3d23af991d0d1dc72e5dd918eec98dd7c5',
@@ -1500,21 +1494,16 @@
           { src: 'https://cdn.discordapp.com/media/v1/collectibles-shop/ab4385a5a8e984e11ddd60bf8d5378f9ddc0f706bf6c1a0b5ba2a4df666c01fd', start: 7908, duration: 4908, loop: true, loopDelay: 3000, zIndex: 100 }
         ]
       },
-      // used if you remove the effect above: 'embers', 'snow', 'confetti', 'bats' or 'none'
+      // if no effect: embers / snow / confetti / bats / none
       fallbackEffect: 'embers',
-      // extra badges, e.g. { icon: 'https://cdn.discordapp.com/badge-icons/2ba85e8026a8614b640c2837bcdfe21b.png', label: 'nitro' }
+      // extra badges { icon, label }
       badges: []
     }
   };
 
-  // ============================================================
-  //  quest log — your current goals
-  //  type: 'main' or 'side'
-  //  tick objectives with done: true and the progress bar fills itself in.
-  //  no objectives? use progress: 0-100 instead. done: true moves a quest to "completed".
-  // ============================================================
+  // quest log. type: main / side, done: true = completed
   const QUEST_LOG = [
-    // ----- main quests -----
+    // main
     {
       title: 'ace the math & sciences track',
       type: 'main',
@@ -1547,7 +1536,7 @@
       ]
     },
 
-    // ----- side quests -----
+    // side
     {
       title: 'level up candle$$',
       type: 'side',
@@ -1591,7 +1580,7 @@
       progress: 0
     },
 
-    // ----- achievements (done: true puts them under "completed") -----
+    // done
     {
       title: 'get into my dream high school',
       type: 'main',
@@ -1648,9 +1637,7 @@
     }
   ];
 
-  // ============================================================
-  //  everything below runs the site
-  // ============================================================
+  // helpers
   const $ = sel => document.querySelector(sel);
   const $$ = sel => Array.from(document.querySelectorAll(sel));
   const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1676,9 +1663,7 @@
     return 'for ' + h + 'h ' + (min % 60) + 'm';
   }
 
-  // ============================================================
-  //  seasonal + profile-effect particles
-  // ============================================================
+  // particles
   function createParticles(canvas, mode, opts) {
     opts = opts || {};
     const ctx = canvas.getContext('2d');
@@ -1758,7 +1743,7 @@
       }
     };
 
-    // [kind, count on a 1280x800 screen, minimum count]
+    // kind, count at 1280x800, min
     const PLAN = {
       snow: [['snow', 140, 30]],
       confetti: [['confetti', 110, 24]],
@@ -1816,9 +1801,7 @@
     };
   }
 
-  // ============================================================
-  //  holiday themes (christmas 24 dec, halloween 31 oct, birthday 16 mar)
-  // ============================================================
+  // themes
   const THEMES = {
     christmas: { enter: 'merry christmas — enter', banner: '🎄 merry christmas!', fx: 'snow' },
     halloween: { enter: 'enter… if you dare', banner: '🎃 happy halloween', fx: 'bats' },
@@ -1835,9 +1818,7 @@
     if (!REDUCED_MOTION) createParticles($('#fxCanvas'), ACTIVE_THEME.fx);
   }
 
-  // ============================================================
-  //  enter screen + navigation
-  // ============================================================
+  // enter screen + nav
   const enterScreen = $('#enterScreen');
   enterScreen.addEventListener('click', () => {
     enterScreen.classList.add('hidden');
@@ -1874,9 +1855,7 @@
     mobileToggle.setAttribute('aria-expanded', String(isOpen));
   });
 
-  // ============================================================
-  //  music tab (stats.fm)
-  // ============================================================
+  // music (stats.fm)
   $$('.music-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       $$('.music-tab').forEach(t => t.classList.remove('active'));
@@ -1892,7 +1871,7 @@
   $('#statsfmLink').href = 'https://stats.fm/' + encodeURIComponent(CONFIG.statsfm.user);
   $('#musicDesc').textContent = "what i've been listening to " + (STATSFM_RANGES[CONFIG.statsfm.range] || 'lately') + ', tracked via stats.fm.';
 
-  // stats.fm sends huge 768px apple music covers; ask for a small one instead
+  // smaller apple music covers
   const smallCover = url => (url ? String(url).replace(/\/\d+x\d+bb\.(jpg|png|webp)$/, '/160x160bb.$1') : null);
   const artistNames = list => (list || []).map(a => a.name).filter(Boolean).join(', ');
 
@@ -1977,9 +1956,7 @@
     }
   }
 
-  // ============================================================
-  //  discord: live status (lanyard), profile (dstn), popup
-  // ============================================================
+  // discord (lanyard + dstn)
   const discord = { lanyard: null, profile: null, profileTried: false };
   const STATUS_LABELS = { online: 'online', idle: 'away', dnd: 'do not disturb', offline: 'offline' };
   const LAST_SEEN_KEY = 'portfolioDiscordLastSeen';
@@ -1992,8 +1969,7 @@
     try { localStorage.setItem(LAST_SEEN_KEY, String(timestamp)); } catch (e) {}
   }
 
-  // newest of: the "last_seen" value in your lanyard kv (written by the optional github action),
-  // or the last time this visitor's browser saw you online
+  // kv last_seen (github action) or last time this browser saw me online
   function getLastSeen() {
     let kv = 0;
     if (discord.lanyard && discord.lanyard.kv && discord.lanyard.kv.last_seen) {
@@ -2076,7 +2052,7 @@
         if (popupOpen) renderPopup();
       }
     } catch (e) {
-      // not available — the popup falls back to the settings at the top of the script
+      // dstn down, use config
     }
   }
 
@@ -2154,17 +2130,16 @@
       bannerImg = 'https://cdn.discordapp.com/banners/' + safeId(user.id) + '/' + user.banner + '.' + (user.banner.indexOf('a_') === 0 ? 'gif' : 'png') + '?size=600';
     }
     bannerEl.style.backgroundColor = bannerColor;
-    // same as discord: your banner image if you have one, otherwise your solid banner colour
     bannerEl.style.backgroundImage = bannerImg ? 'url("' + bannerImg.replace(/"/g, '%22') + '")' : 'none';
 
-    // avatar, decoration, status
+    // avatar
     $('#dcAvatar').src = avatarUrl(user, 256);
     setDecoration($('#dcDeco'), user);
     const dot = $('#dcStatusDot');
     dot.className = 'status-dot ' + status;
     dot.title = STATUS_LABELS[status] || status;
 
-    // custom status bubble
+    // custom status
     const custom = activities.find(a => a.type === 4);
     const bubble = $('#dcCustom');
     if (custom && (custom.state || custom.emoji)) {
@@ -2198,7 +2173,7 @@
     $('#dcBio').innerHTML = formatBio(bio || '');
     $('#dcAbout').hidden = !bio;
 
-    // current activity
+    // activity
     const act = activities.find(a => a.type !== 4);
     const actEl = $('#dcActivity');
     if (act) {
@@ -2218,7 +2193,7 @@
       actEl.hidden = true;
     }
 
-    // status line + last seen
+    // status
     let meta = STATUS_LABELS[status] || status;
     if (status === 'offline') {
       const seen = getLastSeen();
@@ -2231,14 +2206,13 @@
     $('#dcOpen').href = 'https://discord.com/users/' + (safeId(user.id) || CONFIG.discordId);
   }
 
-  // popup open / close
+  // popup
   const overlay = $('#dcOverlay');
   const card = $('#dcCard');
   let popupOpen = false, lastFocus = null, effectFx = null, effectTimers = [], effectRun = 0;
   const effectPreloads = {};
 
-  // the effect files are big (several mb), so they only start downloading once someone
-  // points at / taps your discord picture
+  // effect files are big, only load them on hover
   function preloadEffect() {
     const fx = CONFIG.profile.effect;
     if (!fx || !fx.layers || REDUCED_MOTION) return Promise.resolve();
@@ -2254,9 +2228,7 @@
     }));
   }
 
-  // plays one layer the way discord does: show it at `start`, hide it after `duration`,
-  // and for looping layers play it again after `loopDelay`.
-  // re-setting src is what makes an animated png that already finished start over.
+  // same timing as discord. resetting src restarts the apng
   function playLayer(box, layer, run) {
     const img = new Image();
     img.alt = '';
@@ -2293,7 +2265,7 @@
         }
         return;
       }
-      // wait for the files (up to 6s) so the intro plays from the start instead of half-loaded
+      // wait for it to load (max 6s)
       Promise.race([preloadEffect(), new Promise(r => setTimeout(r, 6000))]).then(() => {
         if (run !== effectRun) return;
         fx.layers.forEach(layer => playLayer(box, layer, run));
@@ -2380,15 +2352,13 @@
     label._t = setTimeout(() => { label.textContent = 'copy username'; }, 1600);
   });
 
-  // keep "last seen 5m ago" / activity timers fresh
+  // refresh last seen + activity time
   setInterval(() => {
     renderDiscordBadge();
     $$('.dc-act-time').forEach(el => { el.textContent = formatDuration(Date.now() - Number(el.dataset.start)); });
   }, 30000);
 
-  // ============================================================
-  //  contact tab clock (synced with time.is)
-  // ============================================================
+  // clock
   let clockOffset = 0;
   const TZ = CONFIG.timezone;
   const partsFmt = new Intl.DateTimeFormat('en-US', {
@@ -2456,7 +2426,7 @@
     setTimeout(clockLoop, 1000 - ((Date.now() + clockOffset) % 1000) + 10);
   }
 
-  // time.is reports the exact bucharest time; we use it to correct a visitor's clock if it's off
+  // fix the clock if the visitor's is off
   function onTimeIsText(text) {
     const m = /(\d{1,2}):(\d{2}):(\d{2})\D+(\d{4})-(\d{2})-(\d{2})/.exec(String(text || ''));
     if (!m) return;
@@ -2489,9 +2459,7 @@
     document.head.appendChild(s);
   }
 
-  // ============================================================
-  //  quest log
-  // ============================================================
+  // quests
   function questCard(q) {
     const objectives = q.objs.length
       ? '<ul class="quest-objectives">' + q.objs.map(o =>
@@ -2549,9 +2517,7 @@
     });
   }
 
-  // ============================================================
-  //  background music player
-  // ============================================================
+  // bg music
   const bgMusic = $('#bgMusic');
   const musicToggle = $('#musicToggle');
   const iconPlay = $('#iconPlay');
@@ -2588,9 +2554,7 @@
     document.addEventListener('keydown', startOnInteraction, { once: true });
   });
 
-  // ============================================================
-  //  start everything
-  // ============================================================
+  // init
   if (CONFIG.instagram) $('#instagramLink').href = 'https://www.instagram.com/' + encodeURIComponent(CONFIG.instagram) + '/';
 
   applyTheme();
